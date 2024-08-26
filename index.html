@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <title>shtora</title>
+
+        <style>
+            body {
+                font-family: monospace;
+                background-color: black;
+                color: white;
+                font-size: 18px;
+            }
+
+            button {
+                border: none;
+                border-radius: 0;
+                color: white;
+                background-color: gray;
+                cursor: pointer;
+                font-size: 18px;
+                padding: 2px 16px;
+            }
+
+            .button-disabled {
+                background-color: gray;
+            }
+
+            .container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 32px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>shtora</h1>
+
+            <div id="status" style="color: red">🚫 disconnected</div>
+
+            <div>
+                <button id="button-open">open</button>
+
+                <button id="button-close">close</button>
+
+                <button id="button-stop">stop</button>
+            </div>
+        </div>
+
+        <script>
+            let socket;
+            let isConnected = false;
+
+            function connect() {
+                socket = new WebSocket("ws://192.168.0.104:3000");
+
+                socket.onopen = (e) => {
+                    console.log("connected");
+                    isConnected = true;
+                    updateStatus();
+                };
+
+                socket.onclose = (event) => {
+                    isConnected = false;
+                    updateStatus();
+                    setTimeout(connect, 3000); // Retry connection after 5 seconds
+                };
+
+                socket.onerror = (error) => {
+                    console.error(`WebSocket Error: ${error}`);
+                };
+            }
+
+            function updateStatus() {
+                const statusElement = document.getElementById("status");
+
+                statusElement.style.color = isConnected ? "green" : "red";
+                statusElement.textContent = isConnected
+                    ? "✅ connected"
+                    : "🚫 disconnected";
+            }
+
+            function sendMessage(message) {
+                if (isConnected) {
+                    socket.send(message);
+                } else {
+                    console.log("Not connected. Cannot send message.");
+                }
+            }
+
+            document
+                .getElementById("button-open")
+                .addEventListener("click", () => sendMessage("open"));
+            document
+                .getElementById("button-close")
+                .addEventListener("click", () => sendMessage("close"));
+            document
+                .getElementById("button-stop")
+                .addEventListener("click", () => sendMessage("stop"));
+
+            // Initial connection
+            connect();
+        </script>
+    </body>
+</html>
