@@ -40,7 +40,7 @@
         <div class="container">
             <h1>shtora</h1>
 
-            <div id="status" style="color: red">🚫 disconnected</div>
+            <div id="status" style="color: grey">connecting...</div>
 
             <div>
                 <button id="button-open">open</button>
@@ -53,33 +53,33 @@
 
         <script>
             let socket;
-            let isConnected = false;
+
+            function isConnected() {
+                return socket?.readyState === WebSocket.OPEN;
+            }
 
             function connect() {
                 socket = new WebSocket("ws://192.168.0.104:3000");
 
                 socket.onopen = (e) => {
-                    console.log("connected");
-                    isConnected = true;
                     updateStatus();
                 };
 
                 socket.onclose = (event) => {
-                    isConnected = false;
                     updateStatus();
-                    setTimeout(connect, 3000); // Retry connection after 5 seconds
+                    setTimeout(connect, 2000); // retry connection
                 };
 
                 socket.onerror = (error) => {
-                    console.error(`WebSocket Error: ${error}`);
+                    console.error(`ws error: ${error}`);
                 };
             }
 
             function updateStatus() {
                 const statusElement = document.getElementById("status");
 
-                statusElement.style.color = isConnected ? "green" : "red";
-                statusElement.textContent = isConnected
+                statusElement.style.color = isConnected() ? "green" : "red";
+                statusElement.textContent = isConnected()
                     ? "✅ connected"
                     : "🚫 disconnected";
             }
@@ -88,9 +88,11 @@
                 if (isConnected) {
                     socket.send(message);
                 } else {
-                    console.log("Not connected. Cannot send message.");
+                    console.log("ws client is not open, cannot send message.");
                 }
             }
+
+            connect();
 
             document
                 .getElementById("button-open")
@@ -101,9 +103,6 @@
             document
                 .getElementById("button-stop")
                 .addEventListener("click", () => sendMessage("stop"));
-
-            // Initial connection
-            connect();
         </script>
     </body>
 </html>
