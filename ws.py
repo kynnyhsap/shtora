@@ -1,15 +1,10 @@
 import asyncio
 import websockets
-import busio
-from board import SCL, SDA
-from adafruit_pca9685 import PCA9685
-from adafruit_motor import servo
 
-i2c = busio.I2C(SCL, SDA)
-pca = PCA9685(i2c)
-pca.frequency = 50
+from gpiozero import Motor
+from time import sleep
 
-s = servo.ContinuousServo(pca.channels[0], min_pulse=700, max_pulse=2500)
+motor = Motor(25, 24)
 
 
 async def handler(websocket, path):
@@ -17,13 +12,13 @@ async def handler(websocket, path):
         print(f"Received message: {message}")
 
         if message == "open":
-            s.throttle = 1
+            motor.forward(1)
         elif message == "close":
-            s.throttle = -1
+            motor.backward(1)
         elif message == "stop":
-            s.throttle = 0
+            motor.stop()
         else:
-            s.throttle = 0
+            motor.stop()
 
         await websocket.send(f"Echo: {message}")
 
@@ -41,5 +36,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("server stopped by user")
-    finally:
-        pca.deinit()
